@@ -58,13 +58,13 @@ class SceneHandler:
 
         return mesh
 
-    def __update_object_and_mesh(self, obj, object_type, version, name, verts, indices, normals, groups, face_ids, material_id):
+    def __update_object_and_mesh(self, obj, object_type, version, name, verts, indices, normals, groups, face_ids):
         if obj.mode == 'EDIT':
             bpy.ops.object.mode_set(mode='OBJECT')
 
         obj.name = name
-        print(f"Updating object {obj.name} with material {material_id}") 
-        self.__apply_material(obj, material_id)
+        print(f"Updating object {obj.name} with material {name}") 
+        self.__apply_material(obj, name)
         print(f"Materials: {obj.data.materials}")
         
         mesh = obj.data
@@ -165,14 +165,14 @@ class SceneHandler:
                 location=True, rotation=True, scale=True)
             obj.matrix_world = old_matrix_world
 
-    def __add_object(self, filename, object_type, plasticity_id, name, mesh, material_id):
+    def __add_object(self, filename, object_type, plasticity_id, name, mesh):
         mesh_obj = bpy.data.objects.new(name, mesh)
         self.files[filename][PlasticityIdUniquenessScope.ITEM][plasticity_id] = mesh_obj
         mesh_obj["plasticity_id"] = plasticity_id
         mesh_obj["plasticity_filename"] = filename
-        print(f"Adding object {mesh_obj.name} with material {material_id}")
+        print(f"Adding object {mesh_obj.name} with material {name}")
         print(f"Materials: {bpy.data.materials}")
-        self.__apply_material(mesh_obj, material_id)
+        self.__apply_material(mesh_obj, name)
         print(f"Materials: {mesh_obj.data.materials}")
         return mesh_obj
 
@@ -188,25 +188,32 @@ class SceneHandler:
         if group:
             bpy.data.collections.remove(group, do_unlink=True)
 
-    def __get_or_create_material(self, material_id):
-        print(f"Getting or creating material {material_id}")
+    def __get_or_create_material(self, name):
+        print(f"Getting or creating material {name}")
         print(f"Materials: {bpy.data.materials}")
+        
+        # Clean name
+        if '.' in name:
+            clean_name = name.split(".")[0]
+        else:
+            clean_name = name
+        
         for mat in bpy.data.materials:
-            if mat.get("plasticity_material_id") == material_id:
+            if mat.get("plasticity_material_id") == clean_name:
                 return mat
 
-        mat = bpy.data.materials.new(name=f"PlasticityMaterial_{material_id}")
-        mat["plasticity_material_id"] = material_id
+        mat = bpy.data.materials.new(name=f"PlasticityMaterial_{clean_name}")
+        mat["plasticity_material_id"] = clean_name
         print(f"Created material {mat.name}")
         print(f"Materials: {bpy.data.materials}")
         return mat
 
-    def __apply_material(self, obj, material_id):
-        mat = self.__get_or_create_material(material_id)
+    def __apply_material(self, obj, name):
+        mat = self.__get_or_create_material(name)
         if not mat:
             return
 
-        print(f"Applying material {material_id} to object {obj.name}")
+        print(f"Applying material {name} to object {obj.name}")
 
         if obj.data.materials:
             obj.data.materials[0] = mat
@@ -239,7 +246,7 @@ class SceneHandler:
                     mesh = self.__create_mesh(
                         name, verts, faces, normals, groups, face_ids)
                     obj = self.__add_object(filename, object_type,
-                                            plasticity_id, name, mesh, material_id)
+                                            plasticity_id, name, mesh)
                     obj.scale = (prop_plasticity_unit_scale,
                                  prop_plasticity_unit_scale, prop_plasticity_unit_scale)
                 else:
@@ -247,7 +254,7 @@ class SceneHandler:
                         plasticity_id)
                     if obj:
                         self.__update_object_and_mesh(
-                            obj, object_type, version, name, verts, faces, normals, groups, face_ids, material_id)
+                            obj, object_type, version, name, verts, faces, normals, groups, face_ids)
                         for parent in obj.users_collection:
                             parent.objects.unlink(obj)
 
