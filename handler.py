@@ -63,9 +63,10 @@ class SceneHandler:
             bpy.ops.object.mode_set(mode='OBJECT')
 
         obj.name = name
-        
+        print(f"Updating object {obj.name} with material {material_id}") 
         self.__apply_material(obj, material_id)
-
+        print(f"Materials: {obj.data.materials}")
+        
         mesh = obj.data
         mesh.clear_geometry()
 
@@ -184,15 +185,16 @@ class SceneHandler:
             bpy.data.collections.remove(group, do_unlink=True)
 
     def __get_or_create_material(self, material_id):
-        if material_id <= 0:
-            return None
-
+        print(f"Getting or creating material {material_id}")
+        print(f"Materials: {bpy.data.materials}")
         for mat in bpy.data.materials:
             if mat.get("plasticity_material_id") == material_id:
                 return mat
 
         mat = bpy.data.materials.new(name=f"PlasticityMaterial_{material_id}")
         mat["plasticity_material_id"] = material_id
+        print(f"Created material {mat.name}")
+        print(f"Materials: {bpy.data.materials}")
         return mat
 
     def __apply_material(self, obj, material_id):
@@ -200,10 +202,13 @@ class SceneHandler:
         if not mat:
             return
 
+        print(f"Applying material {material_id} to object {obj.name}")
+
         if obj.data.materials:
             obj.data.materials[0] = mat
         else:
             obj.data.materials.append(mat)
+        print(f"Materials: {obj.data.materials}")
 
     def __replace_objects(self, filename, inbox_collection, version, objects):
         scene = bpy.context.scene
