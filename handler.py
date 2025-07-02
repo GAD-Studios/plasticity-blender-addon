@@ -58,11 +58,13 @@ class SceneHandler:
 
         return mesh
 
-    def __update_object_and_mesh(self, obj, object_type, version, name, verts, indices, normals, groups, face_ids):
+    def __update_object_and_mesh(self, obj, object_type, version, name, verts, indices, normals, groups, face_ids, material_id):
         if obj.mode == 'EDIT':
             bpy.ops.object.mode_set(mode='OBJECT')
 
         obj.name = name
+        
+        self.__apply_material(obj, material_id)
 
         mesh = obj.data
         mesh.clear_geometry()
@@ -236,11 +238,9 @@ class SceneHandler:
                         plasticity_id)
                     if obj:
                         self.__update_object_and_mesh(
-                            obj, object_type, version, name, verts, faces, normals, groups, face_ids)
+                            obj, object_type, version, name, verts, faces, normals, groups, face_ids, material_id)
                         for parent in obj.users_collection:
                             parent.objects.unlink(obj)
-                if obj:
-                    self.__apply_material(obj, material_id)
 
             elif object_type == ObjectType.GROUP.value:
                 if plasticity_id > 0:
