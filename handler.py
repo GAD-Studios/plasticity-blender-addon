@@ -165,11 +165,15 @@ class SceneHandler:
                 location=True, rotation=True, scale=True)
             obj.matrix_world = old_matrix_world
 
-    def __add_object(self, filename, object_type, plasticity_id, name, mesh):
+    def __add_object(self, filename, object_type, plasticity_id, name, mesh, material_id):
         mesh_obj = bpy.data.objects.new(name, mesh)
         self.files[filename][PlasticityIdUniquenessScope.ITEM][plasticity_id] = mesh_obj
         mesh_obj["plasticity_id"] = plasticity_id
         mesh_obj["plasticity_filename"] = filename
+        print(f"Adding object {mesh_obj.name} with material {material_id}")
+        print(f"Materials: {bpy.data.materials}")
+        self.__apply_material(mesh_obj, material_id)
+        print(f"Materials: {mesh_obj.data.materials}")
         return mesh_obj
 
     def __delete_object(self, filename, version, plasticity_id):
@@ -235,7 +239,7 @@ class SceneHandler:
                     mesh = self.__create_mesh(
                         name, verts, faces, normals, groups, face_ids)
                     obj = self.__add_object(filename, object_type,
-                                            plasticity_id, name, mesh)
+                                            plasticity_id, name, mesh, material_id)
                     obj.scale = (prop_plasticity_unit_scale,
                                  prop_plasticity_unit_scale, prop_plasticity_unit_scale)
                 else:
