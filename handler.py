@@ -181,6 +181,28 @@ class SceneHandler:
         if group:
             bpy.data.collections.remove(group, do_unlink=True)
 
+    def __get_or_create_material(self, material_id):
+        if material_id <= 0:
+            return None
+
+        for mat in bpy.data.materials:
+            if mat.get("plasticity_material_id") == material_id:
+                return mat
+
+        mat = bpy.data.materials.new(name=f"PlasticityMaterial_{material_id}")
+        mat["plasticity_material_id"] = material_id
+        return mat
+
+    def __apply_material(self, obj, material_id):
+        mat = self.__get_or_create_material(material_id)
+        if not mat:
+            return
+
+        if obj.data.materials:
+            obj.data.materials[0] = mat
+        else:
+            obj.data.materials.append(mat)
+
     def __replace_objects(self, filename, inbox_collection, version, objects):
         scene = bpy.context.scene
         prop_plasticity_unit_scale = scene.prop_plasticity_unit_scale
@@ -217,6 +239,8 @@ class SceneHandler:
                             obj, object_type, version, name, verts, faces, normals, groups, face_ids)
                         for parent in obj.users_collection:
                             parent.objects.unlink(obj)
+                if obj:
+                    self.__apply_material(obj, material_id)
 
             elif object_type == ObjectType.GROUP.value:
                 if plasticity_id > 0:
